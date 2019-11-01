@@ -56,14 +56,14 @@ func (x BlueMaestro) setBatteryLevel(d []byte) {
 */
 
 func NewBlueMaestro(a *gatt.Advertisement) (BlueMaestro, error) {
-	if a.CompanyID != 0x0133 {
+	if a.Company != "Blue Maestro Limited" {
 		return nil, errNotBlueMaestro
 	}
 	
 	data := a.ManufacturerData
 	
 	if len(data) != 30 || data[2] != 0x17 {
-		log.Println("BlueMaestro not found or short data")
+		log.Printf("BlueMaestro not found or short data: %v, %v\n", len(data), data[2])
 		return nil, errNotBlueMaestro
 	}
 	

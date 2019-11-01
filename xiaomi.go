@@ -36,20 +36,20 @@ func NewXiaomi(a *gatt.Advertisement) (Xiaomi, error) {
 		}
 	}
 
-	if len(data) > 0 || len(data) <= 13 {
-		log.Println("Xiaomi not found or short data")
+	if len(data) == 0 || len(data) < 13 {
+		// log.Println("Xiaomi not found or short data")
 		return nil, errNotXiaomi
 	}
 
 	if bytes.Compare(data[0:4], XIAOMI_SIG) != 0 {
-		log.Printf("Xiaomi wrong signature" )
+		// log.Printf("Xiaomi wrong signature" )
 		return nil, errNotXiaomi
 	}
 
 	payloadLength := int(data[13])
 	if payloadLength != len(data)-14 {
 		// Data length doesn't match
-		log.Printf("Xiaomi Data length doesn't match: %#v\n", a)
+		// log.Printf("Xiaomi Data length doesn't match: %#v\n", a)
 		return nil, errNotXiaomi
 	}
 
@@ -83,7 +83,7 @@ func NewXiaomi(a *gatt.Advertisement) (Xiaomi, error) {
 		log.Printf("Xiaomi invalid: %#v\n", a)
 		return nil, errNotXiaomi
 	}
-	log.Print("Xiaomi OK")
+	// log.Print("Xiaomi OK")
 	return r, nil
 }
 

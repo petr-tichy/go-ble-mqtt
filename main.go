@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bettercap/gatt"
-	"github.com/bettercap/gatt/examples/option"
+	"github.com/bettercap/gatt/linux/cmd"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"strconv"
@@ -35,7 +35,7 @@ func (mqtt *MQTTConfig) onPeripheralDiscovered(p gatt.Peripheral, a *gatt.Advert
 	if m, err := NewRuuvi(a); err == nil {
 		mqtt.publish(m, "state/sensors", id, rssi_s)
 	} else if m, err := NewXiaomi(a); err == nil {
-		mqtt.publish(m, "", id, rssi_s)
+		mqtt.publish(m, "state/sensors", id, rssi_s)
 	} else if m, err := NewBlueMaestro(a); err == nil {
 		mqtt.publish(m, "", id, rssi_s)
 	} else if !(a.CompanyID != 76 || a.LocalName != "SpaceBoiler") {
@@ -74,9 +74,15 @@ func (mqtt *MQTTConfig) initMQTT() {
 func main() {
 	mqtt := MQTTConfig{nil, 0}
 	mqtt.initMQTT()
-	clientOptions := option.DefaultClientOptions
-	// clientOptions.Set
-	device, err := gatt.NewDevice(clientOptions...)
+	// clientOptions := option.DefaultClientOptions
+	scanParam := gatt.LnxSetScanParams(&cmd.LESetScanParameters{
+		LEScanType:           0x00,   // [0x00]: passive, 0x01: active
+		LEScanInterval:       0x0010, // [0x10]: 0.625ms * 16
+		LEScanWindow:         0x0010, // [0x10]: 0.625ms * 16
+		OwnAddressType:       0x00,   // [0x00]: public, 0x01: random
+		ScanningFilterPolicy: 0x00,   // [0x00]: accept all, 0x01: ignore non-white-listed.
+	})
+	device, err := gatt.NewDevice(scanParam)
 	if err != nil {
 		log.Fatalf("Failed to open device, err: %s\n", err)
 		return
