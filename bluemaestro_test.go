@@ -12,7 +12,7 @@ func TestNewBlueMaestro(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		packet:=tt
+		packet := tt
 
 		adv := new(gatt.Advertisement)
 		adv.ManufacturerData = packet

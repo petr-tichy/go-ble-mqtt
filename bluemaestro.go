@@ -13,66 +13,65 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/bettercap/gatt"
-	"log"
 )
 
-var errNotBlueMaestro = errors.New("Not an BlueMaestro tag")
+var errNotBlueMaestro = errors.New("not an BlueMaestro tag")
 
+// BlueMaestro is a clone of Messages Type
 type BlueMaestro Messages
 
-func (x BlueMaestro) setTemperature(d []byte) {
-	x["temperature"] = fmtDecimal(int(int16(binary.BigEndian.Uint16(d))), 10)
+func (b BlueMaestro) temperature(d []byte) {
+	b["temperature"] = fmtDecimal(int(int16(binary.BigEndian.Uint16(d))), 1)
 }
 
-func (x BlueMaestro) setHumidity(d []byte) {
-	x["humidity"] = fmtDecimal(int(int16(binary.BigEndian.Uint16(d))), 10)
+func (b BlueMaestro) humidity(d []byte) {
+	b["humidity"] = fmtDecimal(int(binary.BigEndian.Uint16(d)), 1)
 }
 
-func (x BlueMaestro) setDewPoint(d []byte) {
-	x["dew_point"] = fmtDecimal(int(int16(binary.BigEndian.Uint16(d))), 10)
+func (b BlueMaestro) dewPoint(d []byte) {
+	b["dew_point"] = fmtDecimal(int(int16(binary.BigEndian.Uint16(d))), 1)
 }
 
-func (x BlueMaestro) setBatteryLevel(d []byte) {
-	x["battery_level"] = fmtDecimal(int(d[0]), 1)
+func (b BlueMaestro) batteryLevel(d []byte) {
+	b["battery_level"] = fmtDecimal(int(d[0]), 0)
 }
-
-/*
-        data = {}
-        raw_data = packet.retrieve('Payload for mfg_specific_data')
-        if raw_data:
-            pckt = raw_data[0].val
-            mfg_id = unpack('<H', pckt[:2])[0]
-            if mfg_id == BLUEMAESTRO:
-                data['version'] = unpack('<B', pckt[2:3])[0]
-                data['batt_lvl'] = unpack('<B', pckt[3:4])[0]
-                data['logging'] = unpack('>H', pckt[4:6])[0]
-                data['interval'] = unpack('>H', pckt[6:8])[0]
-                data['temperature'] = unpack('>h', pckt[8:10])[0]/10
-                data['humidity'] = unpack('>h', pckt[10:12])[0]/10
-                data['pressure'] = unpack('>h', pckt[12:14])[0]/10
-        return data
-
-
-*/
 
 func NewBlueMaestro(a *gatt.Advertisement) (BlueMaestro, error) {
 	if a.Company != "Blue Maestro Limited" {
 		return nil, errNotBlueMaestro
 	}
-	
+
 	data := a.ManufacturerData
-	
-	if len(data) != 30 || data[2] != 0x17 {
-		log.Printf("BlueMaestro not found or short data: %v, %v\n", len(data), data[2])
+
+	if len(data) != 16 || data[2] != 0x17 {
+		//log.Printf("BlueMaestro not found or short data: %v, %v\n", len(data), data[2])
 		return nil, errNotBlueMaestro
 	}
-	
-	r := make(BlueMaestro)
-	r.setBatteryLevel(data[3:4])
-	r.setTemperature(data[8:10])
-	r.setHumidity(data[10:12])
-	r.setDewPoint(data[12:14])
 
-	log.Print("BlueMaestro OK")
+	r := make(BlueMaestro)
+	r.batteryLevel(data[3:4])
+	r.temperature(data[8:10])
+	r.humidity(data[10:12])
+	r.dewPoint(data[12:14])
+
 	return r, nil
 }
+
+/*
+   data = {}
+   raw_data = packet.retrieve('Payload for mfg_specific_data')
+   if raw_data:
+       pckt = raw_data[0].val
+       mfg_id = unpack('<H', pckt[:2])[0]
+       if mfg_id == BLUEMAESTRO:
+           data['version'] = unpack('<B', pckt[2:3])[0]
+           data['batt_lvl'] = unpack('<B', pckt[3:4])[0]
+           data['logging'] = unpack('>H', pckt[4:6])[0]
+           data['interval'] = unpack('>H', pckt[6:8])[0]
+           data['temperature'] = unpack('>h', pckt[8:10])[0]/10
+           data['humidity'] = unpack('>h', pckt[10:12])[0]/10
+           data['pressure'] = unpack('>h', pckt[12:14])[0]/10
+   return data
+
+
+*/
