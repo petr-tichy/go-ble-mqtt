@@ -36,7 +36,7 @@ func (b BlueMaestro) batteryLevel(d []byte) {
 	b["battery_level"] = fmtDecimal(int(d[0]), 0)
 }
 
-func NewBlueMaestro(a *gatt.Advertisement) (BlueMaestro, error) {
+func NewBlueMaestro(a *gatt.Advertisement) (Messages, error) {
 	if a.Company != "Blue Maestro Limited" {
 		return nil, errNotBlueMaestro
 	}
@@ -54,7 +54,7 @@ func NewBlueMaestro(a *gatt.Advertisement) (BlueMaestro, error) {
 	r.humidity(data[10:12])
 	r.dewPoint(data[12:14])
 
-	return r, nil
+	return Messages(r), nil
 }
 
 /*

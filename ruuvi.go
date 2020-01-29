@@ -39,7 +39,7 @@ func (r Ruuvi) battery(d []byte) {
 	r["battery"] = fmtDecimal(int(binary.BigEndian.Uint16(d)), 3)
 }
 
-func NewRuuvi(a *gatt.Advertisement) (Ruuvi, error) {
+func NewRuuvi(a *gatt.Advertisement) (Messages, error) {
 	if !(len(a.ManufacturerData) == 16 && a.CompanyID == 0x0499 && a.ManufacturerData[2] == 0x03) {
 		return nil, errNotRuuvi
 	}
@@ -58,5 +58,5 @@ func NewRuuvi(a *gatt.Advertisement) (Ruuvi, error) {
 		length=sqrt(dx**2 + dy**2 + dz**2)
 	*/
 
-	return r, nil
+	return Messages(r), nil
 }

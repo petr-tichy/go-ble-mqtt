@@ -24,10 +24,11 @@ func (x Xiaomi) humidity(d []byte) {
 }
 
 func (x Xiaomi) batteryLevel(d []byte) {
-
+	x["battery_level"] = fmtDecimal(int(d[0]), 0)
 }
 
-func NewXiaomi(a *gatt.Advertisement) (Xiaomi, error) {
+//noinspection GoNilness
+func NewXiaomi(a *gatt.Advertisement) (Messages, error) {
 	var data []byte
 	for _, sd := range a.ServiceData {
 		if sd.UUID.Equal(xiaomiUUUID) {
@@ -35,7 +36,7 @@ func NewXiaomi(a *gatt.Advertisement) (Xiaomi, error) {
 		}
 	}
 
-	if len(data) == 0 || len(data) < 14 || bytes.Compare(data[0:4], xiaomiSig) != 0 {
+	if len(data) < 14 || bytes.Compare(data[0:4], xiaomiSig) != 0 {
 		// log.Printf("Xiaomi not found or short data: %#v\n", a)
 		return nil, errNotXiaomi
 	}
@@ -74,5 +75,6 @@ func NewXiaomi(a *gatt.Advertisement) (Xiaomi, error) {
 		return nil, errNotXiaomi
 	}
 	r["message_number"] = fmtDecimal(int(data[4]), 0)
-	return r, nil
+
+	return Messages(r), nil
 }

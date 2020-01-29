@@ -1,18 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"encoding/hex"
 	"github.com/bettercap/gatt"
+	"reflect"
 	"testing"
 )
 
 func TestNewBlueMaestro(t *testing.T) {
-	cases := [][]byte{
-		{51, 1, 1, 45, 3, 232, 254, 189, 0, 203, 1, 25, 1, 188, 1, 19, 1, 162, 1, 21, 1, 172, 0, 108, 2, 196, 145},
+	cases := []struct {
+		packet  string
+		message Messages
+	}{
+		{"3301012d03e8febd00cb011901bc011301a2011501ac006c02c491",
+			Messages(nil)},
 	}
 
 	for _, tt := range cases {
-		packet := tt
+		packet, _ := hex.DecodeString(tt.packet)
 
 		adv := new(gatt.Advertisement)
 		adv.ManufacturerData = packet
@@ -23,6 +28,18 @@ func TestNewBlueMaestro(t *testing.T) {
 		if err != nil {
 			t.Errorf("%q", err)
 		}
-		fmt.Printf("%+v\n", messages)
+
+		/*
+			fmt.Printf("%+#v", struct {
+				packet   string
+				messages Messages
+			}{hex.EncodeToString(packet), messages})
+			fmt.Printf("%+v\n", messages)
+		*/
+
+		if !reflect.DeepEqual(messages, tt.message) {
+			t.Errorf("%q != %q", messages, tt.message)
+		}
+
 	}
 }
