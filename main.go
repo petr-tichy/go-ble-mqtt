@@ -13,6 +13,9 @@ import (
 )
 
 const serverTopic = "state/servers/spacezero/status"
+const serialPort = "/dev/serial0"
+
+const noRSSI = -1 << 16
 
 type mqttConfig struct {
 	client MQTT.Client
@@ -54,7 +57,9 @@ func (mqtt *mqttConfig) publish(m map[string]string, id string, rssi int) {
 	for k, v := range m {
 		mqtt.client.Publish(prefix+k, byte(mqtt.qos), false, v)
 	}
-	mqtt.client.Publish(prefix+"rssi", byte(mqtt.qos), false, fmt.Sprintf("%d", rssi))
+	if rssi != noRSSI {
+		mqtt.client.Publish(prefix+"rssi", byte(mqtt.qos), false, fmt.Sprintf("%d", rssi))
+	}
 }
 
 func (mqtt *mqttConfig) initMQTT() {
@@ -82,22 +87,7 @@ func onStateChanged(d gatt.Device, s gatt.State) {
 	}
 }
 
-func main() {
-	mqtt := mqttConfig{nil, 0}
-	mqtt.initMQTT()
-	clientOptions := option.DefaultClientOptions
-	device, err := gatt.NewDevice(clientOptions...)
-	if err != nil {
-		log.Fatalf("failed to open device, err: %s\n", err)
-		return
-	}
-	setScanParam(device)
-	device.Handle(gatt.PeripheralDiscovered(mqtt.onPeripheralDiscovered))
-	if device.Init(onStateChanged) != nil {
-		log.Fatalf("device init failed: %s", err)
-		return
-	}
-
+func handleStop(mqtt *mqttConfig) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, os.Kill)
 
@@ -115,4 +105,23 @@ func main() {
 			mqtt.client.Publish(serverTopic, 0, false, "alive")
 		}
 	}
+}
+
+func main() {
+	mqtt := mqttConfig{nil, 0}
+	mqtt.initMQTT()
+	clientOptions := option.DefaultClientOptions
+	device, err := gatt.NewDevice(clientOptions...)
+	if err != nil {
+		log.Fatalf("failed to open device, err: %s\n", err)
+		return
+	}
+	setScanParam(device)
+	device.Handle(gatt.PeripheralDiscovered(mqtt.onPeripheralDiscovered))
+	if device.Init(onStateChanged) != nil {
+		log.Fatalf("device init failed: %s", err)
+		return
+	}
+	go startSerialHandler(&mqtt)
+	handleStop(&mqtt)
 }
